@@ -8,12 +8,12 @@
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0",
+
   "scripts": {
     "dev": "pnpm --filter dashboard dev",
     "build": "pnpm --filter dashboard build",
     "test": "pnpm --filter '*' test --passWithNoTests",
-    "lint": "pnpm --filter '*' lint --if-present",
+    "lint": "pnpm -r run lint",
     "chaos": "tsx scripts/chaos-monkey.ts",
     "chaos:dry": "tsx scripts/chaos-monkey.ts --dry-run",
     "monitor:init": "tsx monitoring/init-db.ts",
