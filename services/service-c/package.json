@@ -1,0 +1,17 @@
+{
+  "name": "@sentinel/service-c",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sentinel/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^1.5.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

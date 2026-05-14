@@ -1,0 +1,110 @@
+name: Sentinel CI/CD
+
+# Trigger on pushes to main and all pull requests targeting main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PNPM_VERSION: 9.0.0
+  NODE_VERSION: 20
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Install → Type-check → Test
+  # Runs on every push and PR to catch regressions early
+  # ─────────────────────────────────────────────────────────────
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out the full repository at the triggering commit
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up pnpm package manager at the pinned version
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      # 3. Set up Node.js with pnpm cache to speed up installs
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # 4. Install all workspace dependencies
+      #    --no-frozen-lockfile allows CI to succeed without a committed lockfile;
+      #    replace with --frozen-lockfile once pnpm-lock.yaml is committed.
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # 5. Run TypeScript compiler over the dashboard (no-emit = type-check only)
+      - name: Type-check dashboard
+        run: pnpm --filter @sentinel/dashboard exec tsc --noEmit
+
+      # 6. Run Vitest across all workspace packages; skip packages with no tests
+      - name: Run all service tests
+        run: pnpm test
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Build → Init DB → Deploy to Vercel
+  # Runs only on direct pushes to main (not PRs) after tests pass
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy Dashboard to Vercel
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      # 1. Check out the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up pnpm
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      # 3. Set up Node.js with pnpm cache
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # 4. Install all workspace dependencies
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # 5. Create/migrate the Turso remote database schema
+      #    This is idempotent (CREATE TABLE IF NOT EXISTS) so safe to re-run
+      - name: Initialize remote Turso database
+        run: pnpm monitor:init
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      # 6. Build the Next.js dashboard with Turso credentials baked in
+      - name: Build dashboard
+        run: pnpm --filter @sentinel/dashboard build
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      # 7. Deploy the built artefact to Vercel production
+      #    vercel.json at apps/dashboard/ handles root/output directory mapping
+      - name: Deploy to Vercel (production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: --prod

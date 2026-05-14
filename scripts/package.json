@@ -1,0 +1,16 @@
+{
+  "name": "@sentinel/scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@libsql/client": "^0.6.0",
+    "@sentinel/monitoring": "workspace:*",
+    "@sentinel/shared": "workspace:*",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

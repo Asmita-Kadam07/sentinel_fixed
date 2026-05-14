@@ -1,0 +1,40 @@
+{
+  "name": "project-sentinel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Autonomous Incident Resolution Engine",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter dashboard dev",
+    "build": "pnpm --filter dashboard build",
+    "test": "pnpm --filter '*' test --passWithNoTests",
+    "lint": "pnpm --filter '*' lint --if-present",
+    "chaos": "tsx scripts/chaos-monkey.ts",
+    "chaos:dry": "tsx scripts/chaos-monkey.ts --dry-run",
+    "monitor:init": "tsx monitoring/init-db.ts",
+    "monitor:poll": "tsx monitoring/poller.ts",
+    "monitor:status": "tsx monitoring/status.ts",
+    "resolve": "tsx scripts/autonomous-resolver.ts",
+    "beta": "tsx scripts/generate-regression-test.ts",
+    "rollback": "tsx scripts/rollback.ts",
+    "demo": "tsx scripts/demo-workflow.ts",
+    "postmortem": "tsx scripts/generate-postmortem.ts"
+  },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  }
+}

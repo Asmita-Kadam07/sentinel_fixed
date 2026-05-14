@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.next/
+*.db
+*.db-shm
+*.db-wal
+services/.chaos-backups/
+services/logs/*.log
+!services/logs/.gitkeep
+.env
+.env.local
+.env.production
+.vercel/
