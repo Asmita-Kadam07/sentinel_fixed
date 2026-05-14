@@ -282,19 +282,30 @@ Return the COMPLETE corrected file content between these exact markers:
 (complete file content here)
 ===FIXED_FILE_END===`;
 
-  // Step 4: Call API
+  
+    // Step 4: Mock AI response (demo mode)
   let fixedContent: string | null = null;
-  try {
-    const response = await callAnthropicAPI(agentPrompt, useThinkingMode);
 
-    const match = response.match(/===FIXED_FILE_START===\n([\s\S]+?)\n===FIXED_FILE_END===/);
-    if (match?.[1]) {
-      fixedContent = match[1].trim();
-    } else {
-      console.error('[resolver] Could not extract fixed file from API response');
-    }
+  console.info('[resolver] 🤖 Mock Claude agent generating fix...');
+
+  // Simulate AI thinking time
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  try {
+    // Remove chaos-injected lines
+    fixedContent = sourceCode
+      .split('\n')
+      .filter((line) => !line.includes('// CHAOS:'))
+      .filter((line) => !line.includes('nonexistent-module'))
+      .filter((line) => !line.includes('undefinedVariable'))
+      .join('\n');
+
+    console.info('[resolver] ✅ Mock fix generated successfully');
   } catch (err) {
-    console.error('[resolver] API call failed:', err instanceof Error ? err.message : String(err));
+    console.error(
+      '[resolver] Mock fix generation failed:',
+      err instanceof Error ? err.message : String(err)
+    );
   }
 
   if (!fixedContent) {
